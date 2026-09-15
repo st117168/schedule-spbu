@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Расписание студенческой группы СПбГУ (факультет ПМ-ПУ).
+
+Скачивает Excel-файл с сайта timetable.spbu.ru, фильтрует занятия
+по правилам из config.json, выводит расписание в консоль в виде
+двухколоночной таблицы (пн–ср / чт–сб) и сохраняет PNG-картинку
+с цветными плашками для дней недели и времени.
+"""
+
 import json
 import os
 import re
@@ -34,10 +43,11 @@ TIME_RE = re.compile(r"^\s+\S+\)\s+\d{2}:\d{2}")
 
 
 # ----------------------------------------------------------------------
-# Вспомогательные функции (без изменений)
+# Вспомогательные функции
 # ----------------------------------------------------------------------
 
 def get_monday(d: date = None) -> date:
+    """Возвращает дату понедельника недели, в которую входит d (или сегодня)."""
     if d is None:
         d = date.today()
     return d - timedelta(days=d.weekday())
@@ -51,6 +61,7 @@ def load_config(path: str = CONFIG_FILE) -> dict:
 
 
 def download_schedule(group_id: int, monday: date) -> Path:
+    """Скачивает Excel-файл с расписанием (русская версия)."""
     CACHE_DIR.mkdir(exist_ok=True)
     date_str = monday.strftime("%Y-%m-%d")
     filename = f"расписание_{date_str}.xlsx"
@@ -59,7 +70,6 @@ def download_schedule(group_id: int, monday: date) -> Path:
     url = f"{BASE_URL}?studentGroupId={group_id}&weekMonday={date_str}"
     print(f"Скачивание: {url}")
 
-    # Просим русскую версию страницы
     headers = {"Accept-Language": "ru,en-US;q=0.7,en;q=0.3"}
     resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
@@ -89,6 +99,7 @@ EN_DAYS = {
 
 
 def extract_date(day_str: str, monday: date):
+    """Извлекает дату из строки вида 'вторник 15 сентября' или 'Tuesday September 15'."""
     if not isinstance(day_str, str):
         return None
     text = day_str.replace("\n", " ").lower()
@@ -118,6 +129,25 @@ def extract_date(day_str: str, monday: date):
         return None
 
 
+def _matches_filter(row, rule: str) -> bool:
+    """
+    Проверяет, подходит ли занятие под правило.
+    Правило — строка вида 'предмет' или 'предмет|преподаватель'
+    (можно больше частей через |). Все части должны присутствовать
+    в объединённой строке занятия (название + место + преподаватель),
+    регистр не важен.
+    """
+    parts = [p.strip().lower() for p in rule.split("|") if p.strip()]
+    if not parts:
+        return False
+    haystack = " ".join([
+        str(row.get("Название", "")),
+        str(row.get("Место", "")),
+        str(row.get("Преподаватель", "")),
+    ]).lower()
+    return all(p in haystack for p in parts)
+
+
 def parse_schedule(filepath: Path, filters: list) -> pd.DataFrame:
     raw = pd.read_excel(filepath, header=None)
 
@@ -142,9 +172,12 @@ def parse_schedule(filepath: Path, filters: list) -> pd.DataFrame:
 
     data["Дата"] = data["День"].apply(lambda x: extract_date(x, monday))
 
+    # ---- Фильтрация ----
     if filters:
-        pattern = "|".join(filters)
-        mask = data["Название"].str.contains(pattern, case=False, na=False, regex=True)
+        mask = data.apply(
+            lambda row: any(_matches_filter(row, rule) for rule in filters),
+            axis=1,
+        )
         data = data[mask].copy()
 
     if data.empty:
@@ -200,7 +233,6 @@ def build_grid(df: pd.DataFrame):
             name = str(row["Название"]).strip()
             place = str(row["Место"]).strip()
             teacher = str(row["Преподаватель"]).strip()
-            # Номер пары добавляется прямо в первую строку блока
             entry = f"  {slot}) {time_str}\n  {name}\n  {place}\n  {teacher}"
             grouped[day_key].append(entry)
 
@@ -306,7 +338,6 @@ def save_schedule_as_image(grid, output_path="расписание.png",
     def tw(s):
         return font.getlength(s)
 
-    # Ширина колонок
     left_max = 0
     right_max = 0
     for l, r in grid:
@@ -324,44 +355,32 @@ def save_schedule_as_image(grid, output_path="расписание.png",
     img = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(img)
 
-    # Цвета
     DARK_RED = (139, 0, 0)      # тёмно-красный — для дней недели
     GRAY = (211, 211, 211)      # светло-серый — для времени
 
     x_left = padding
     x_right = padding + left_max + col_gap
-    pad_text = 6  # отступ текста от края плашки
+    pad_text = 6
 
     y = padding
     for l, r in grid:
         lt = classify_line(l)
         rt = classify_line(r)
 
-        # --- Фон под левой частью ---
         if lt == "day":
-            draw.rectangle(
-                [x_left, y, x_left + left_max, y + row_height - 3],
-                fill=DARK_RED,
-            )
+            draw.rectangle([x_left, y, x_left + left_max, y + row_height - 3],
+                           fill=DARK_RED)
         elif lt == "time":
-            draw.rectangle(
-                [x_left, y, x_left + left_max, y + row_height - 3],
-                fill=GRAY,
-            )
+            draw.rectangle([x_left, y, x_left + left_max, y + row_height - 3],
+                           fill=GRAY)
 
-        # --- Фон под правой частью ---
         if rt == "day":
-            draw.rectangle(
-                [x_right, y, x_right + right_max, y + row_height - 3],
-                fill=DARK_RED,
-            )
+            draw.rectangle([x_right, y, x_right + right_max, y + row_height - 3],
+                           fill=DARK_RED)
         elif rt == "time":
-            draw.rectangle(
-                [x_right, y, x_right + right_max, y + row_height - 3],
-                fill=GRAY,
-            )
+            draw.rectangle([x_right, y, x_right + right_max, y + row_height - 3],
+                           fill=GRAY)
 
-        # --- Текст ---
         text_y = y + 2
         fill_l = "white" if lt == "day" else "black"
         fill_r = "white" if rt == "day" else "black"
