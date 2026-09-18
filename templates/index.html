@@ -8,120 +8,194 @@
   :root {
     --bg:#f4f6fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
     --accent:#4f46e5; --border:#e5e7eb; --today:#f59e0b;
+    --nextweek:#8b5cf6;
+    --line-15:#f1f3f7;
+    --line-30:#b9c0cf;
+    --line-60:#6b7280;
+    --today-bg:#fff3d6;
+    --today-head:#f59e0b;
   }
   body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
-         background:var(--bg); color:var(--text); padding:20px; line-height:1.4; }
-  .container { max-width:1600px; margin:0 auto; }
+         background:var(--bg); color:var(--text); padding:18px; line-height:1.4; }
+  .container { max-width:1800px; margin:0 auto; }
 
   header { display:flex; justify-content:space-between; align-items:center;
-           flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+           flex-wrap:wrap; gap:12px; margin-bottom:14px; }
   h1 { font-size:22px; font-weight:700; }
 
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .btn { padding:9px 16px; border:none; border-radius:8px;
          background:var(--accent); color:#fff; font-size:13px; font-weight:600;
-         cursor:pointer; font-family:inherit; transition:.15s; }
+         cursor:pointer; font-family:inherit; transition:.15s; white-space:nowrap; }
   .btn:hover { background:#4338ca; }
   .btn.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
   .btn.secondary:hover { background:#eef2ff; }
+  .btn.danger { background:#fff; color:#dc2626; border:1px solid #dc2626; }
+  .btn.danger:hover { background:#fef2f2; }
+  .btn.small { padding:6px 12px; font-size:12px; }
   .btn:disabled { opacity:.5; cursor:wait; }
 
-  /* Быстрая форма добавления */
-  .quick-add {
-    background:var(--card); border-radius:12px; padding:12px; margin-bottom:16px;
-    box-shadow:0 1px 3px rgba(0,0,0,.06);
-    display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px;
+  .status { font-size:12px; color:var(--muted); margin-left:6px; }
+  .status.error { color:#ef4444; }
+  .status.ok { color:#10b981; }
+
+  .topics-toggle {
+    background:none; border:none; color:var(--accent); cursor:pointer;
+    font-size:13px; padding:0; margin:0 0 12px; text-decoration:underline;
+    font-family:inherit;
   }
-  .quick-add input, .quick-add select {
-    padding:9px 11px; border:1px solid var(--border); border-radius:8px;
+
+  /* Панель тем */
+  .topics-panel {
+    background:var(--card); border-radius:14px; padding:16px;
+    margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.06); display:none;
+  }
+  .topics-panel.open { display:block; }
+  .topics-panel h3 { font-size:13px; margin-bottom:12px; color:var(--muted); font-weight:600; }
+  .topic-list { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .topic-row {
+    display:grid; grid-template-columns:28px 1fr auto; gap:10px; align-items:center;
+    padding:7px 10px; border:1px solid var(--border); border-radius:10px;
+    background:#fafbfd; transition:.15s;
+  }
+  .topic-row:hover { border-color:var(--accent); }
+  .topic-color-dot {
+    width:20px; height:20px; border-radius:50%; cursor:pointer;
+    border:2px solid #fff; box-shadow:0 0 0 1px var(--border);
+    position:relative; overflow:hidden; flex-shrink:0;
+  }
+  .topic-color-dot input[type=color] {
+    position:absolute; inset:-10px; opacity:0; cursor:pointer;
+    width:200%; height:200%; border:none; padding:0;
+  }
+  .topic-name-input {
+    padding:5px 9px; border:1px solid transparent; border-radius:6px;
+    font-size:13px; font-family:inherit; background:transparent;
+    color:var(--text); font-weight:600; width:100%; transition:.15s;
+  }
+  .topic-name-input:hover { background:#fff; border-color:var(--border); }
+  .topic-name-input:focus { background:#fff; border-color:var(--accent); outline:none; }
+  .topic-row-actions { display:flex; gap:6px; align-items:center; }
+  .task-count { font-size:11px; color:var(--muted); padding:0 8px; white-space:nowrap; }
+  .new-topic-form {
+    display:grid; grid-template-columns:28px 1fr auto; gap:10px; align-items:center;
+    padding-top:12px; border-top:1px solid var(--border);
+  }
+  .new-topic-form input[type=text] {
+    padding:7px 11px; border:1px solid var(--border); border-radius:8px;
     font-size:13px; font-family:inherit; background:#fff; color:var(--text);
   }
-  .quick-add input:focus, .quick-add select:focus {
+  .new-topic-form input[type=text]:focus {
     outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;
   }
-
-  /* Двухколоночный вид недель */
-  .weeks-wrap {
-    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  .icon-btn {
+    background:#fff; border:1px solid var(--border);
+    width:22px; height:22px; border-radius:5px; cursor:pointer;
+    font-size:11px; display:flex; align-items:center; justify-content:center;
+    line-height:1; padding:0; color:var(--text);
   }
+  .icon-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .icon-btn.del:hover { background:#dc2626; border-color:#dc2626; }
 
+  /* Панели недель */
+  .weeks-wrap { display:flex; flex-direction:column; gap:22px; }
   .week-panel {
     background:var(--card); border-radius:14px; padding:14px;
     box-shadow:0 1px 3px rgba(0,0,0,.06);
   }
   .week-panel.next { background:#faf7ff; }
 
-  .week-panel h2 {
-    font-size:15px; font-weight:700; margin-bottom:4px;
+  .week-head {
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px; margin-bottom:10px;
   }
-  .week-panel.current h2 { color:var(--accent); }
-  .week-panel.next h2 { color:#8b5cf6; }
-  .week-panel .range { font-size:12px; color:var(--muted); margin-bottom:12px; }
+  .week-head h2 { font-size:16px; font-weight:700; }
+  .week-panel.current .week-head h2 { color:var(--accent); }
+  .week-panel.next .week-head h2 { color:var(--nextweek); }
+  .week-head .range { font-size:12px; color:var(--muted); margin-left:10px; font-weight:400; }
+  .week-head-actions { display:flex; gap:8px; }
 
-  /* Сетка: 1 колонка времени + 7 дней */
   .cal-grid {
     display:grid;
     grid-template-columns:56px repeat(7,1fr);
-    gap:2px;
+    gap:0;
     position:relative;
-    max-height:70vh;
-    overflow-y:auto;
+    user-select:none;
   }
 
   .cal-header {
     font-size:11px; font-weight:700; text-align:center; padding:6px 2px;
-    border-bottom:2px solid var(--border); position:sticky; top:0;
-    background:inherit; z-index:2;
+    border-bottom:2px solid var(--border);
+    background:var(--card);
   }
-  .week-panel.next .cal-header { border-color:#8b5cf6; }
+  .week-panel.next .cal-header { border-color:var(--nextweek); }
   .week-panel.current .cal-header { border-color:var(--accent); }
   .cal-header .date { display:block; font-weight:400; color:var(--muted); font-size:10px; }
-  .cal-header.today { color:var(--today); }
-  .cal-header.today .date { color:var(--today); font-weight:600; }
+  .cal-header.today {
+    color: #b45309;
+    background: #fde68a;
+    border-bottom-color: var(--today-head) !important;
+  }
+  .cal-header.today .date {
+    color: #92400e;
+    font-weight: 700;
+  }
 
-  /* Слоты времени */
+  /* Шкала времени */
   .cal-time-col { position:relative; }
   .cal-time-label {
     font-size:10px; color:var(--muted); text-align:right;
-    padding-right:6px; height:60px; line-height:1;
+    padding-right:6px; height:60px;
     display:flex; align-items:flex-start; justify-content:flex-end;
-    padding-top:2px;
+    padding-top:0; line-height:1;
   }
+  .cal-time-label .tick { display:block; margin-top:-5px; }
 
-  /* День — вертикальная колонка */
   .cal-day {
     position:relative;
     border-left:1px solid var(--border);
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent 59px,
-        #eef0f4 59px,
-        #eef0f4 60px
-      );
-    min-height:960px; /* 16 слотов × 60px */
+    background-image:
+      repeating-linear-gradient(to bottom,
+        transparent 0, transparent 14px,
+        var(--line-15) 14px, var(--line-15) 15px),
+      repeating-linear-gradient(to bottom,
+        transparent 0, transparent 29px,
+        var(--line-30) 29px, var(--line-30) 30px),
+      repeating-linear-gradient(to bottom,
+        transparent 0, transparent 58px,
+        var(--line-60) 58px, var(--line-60) 60px);
+    background-size: 100% 60px, 100% 60px, 100% 60px;
+    height: calc(var(--hours) * 60px);
   }
-  .cal-day.today { background-color:#fffbf0; }
+  .cal-day.today {
+    background-color: var(--today-bg);
+    box-shadow: inset 0 0 0 2px var(--today-head);
+    position: relative;
+    z-index: 2;
+  }
 
-  /* Задача как блок на шкале */
+  /* Задача */
   .event {
     position:absolute;
     left:2px; right:2px;
     border-radius:6px;
-    padding:4px 6px;
+    padding:3px 6px;
     font-size:11px;
     color:#fff;
     overflow:hidden;
-    cursor:pointer;
+    cursor:grab;
     box-shadow:0 1px 2px rgba(0,0,0,.15);
-    transition:.15s;
+    transition:box-shadow .15s;
     z-index:1;
   }
-  .event:hover { transform:scale(1.02); z-index:5; box-shadow:0 3px 8px rgba(0,0,0,.25); }
-  .event.done { opacity:.55; text-decoration:line-through; }
-  .event .title { font-weight:600; line-height:1.2; word-break:break-word; }
-  .event .meta { font-size:9px; opacity:.85; margin-top:2px; }
+  .event:hover { box-shadow:0 3px 8px rgba(0,0,0,.25); z-index:5; }
+  .event.dragging { cursor:grabbing; opacity:.85; z-index:20; box-shadow:0 6px 16px rgba(0,0,0,.35); }
+  .event.done { opacity:.55; }
+  .event.done .title { text-decoration:line-through; }
+  .event .title { font-weight:600; line-height:1.2; word-break:break-word; padding-right:16px; }
+  .event .meta { font-size:9px; opacity:.9; margin-top:2px; }
+  .event .time-lbl { font-size:9px; opacity:.85; }
+
   .event .del {
     position:absolute; top:2px; right:2px;
     width:14px; height:14px; border-radius:3px;
@@ -131,14 +205,30 @@
   }
   .event:hover .del { opacity:1; }
 
-  /* Модалка для создания задачи кликом по сетке */
+  .event .resize-handle {
+    position:absolute; left:0; right:0; bottom:0; height:6px;
+    cursor:ns-resize;
+    background:transparent;
+  }
+  .event .resize-handle:hover { background:rgba(255,255,255,.35); }
+
+  .drag-preview {
+    position:absolute; left:2px; right:2px;
+    background:rgba(79,70,229,.25);
+    border:2px dashed var(--accent);
+    border-radius:6px;
+    pointer-events:none;
+    z-index:10;
+  }
+
+  /* Модалка */
   .modal-backdrop {
     position:fixed; inset:0; background:rgba(0,0,0,.4);
     display:none; align-items:center; justify-content:center; z-index:100;
   }
   .modal-backdrop.open { display:flex; }
   .modal {
-    background:#fff; border-radius:12px; padding:20px; width:380px;
+    background:#fff; border-radius:12px; padding:20px; width:400px;
     box-shadow:0 10px 40px rgba(0,0,0,.3);
   }
   .modal h3 { font-size:15px; margin-bottom:12px; }
@@ -148,16 +238,63 @@
     padding:8px 10px; border:1px solid var(--border); border-radius:6px;
     font-size:13px; font-family:inherit;
   }
+  .modal .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
 
-  .status {
-    font-size:12px; color:var(--muted); margin-left:8px;
+  @media (max-width:900px) {
+    .cal-grid { grid-template-columns:44px repeat(7,minmax(80px,1fr)); }
   }
-  .status.error { color:#ef4444; }
-  .status.ok { color:#10b981; }
 
-  @media (max-width:1100px) {
-    .weeks-wrap { grid-template-columns:1fr; }
+  /* Контекстное меню */
+  .ctx-menu {
+    position:fixed;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 10px 40px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+    padding:6px;
+    min-width:220px;
+    z-index:1000;
+    font-size:13px;
+    display:none;
+    user-select:none;
+  }
+  .ctx-menu.open { display:block; }
+  .ctx-item {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    color:var(--text);
+    transition:background .12s;
+  }
+  .ctx-item:hover { background:#eef2ff; }
+  .ctx-item.danger { color:#dc2626; }
+  .ctx-item.danger:hover { background:#fef2f2; }
+  .ctx-item .ico {
+    width:18px; text-align:center; flex-shrink:0;
+    font-size:14px; opacity:.85;
+  }
+  .ctx-item .lbl { flex:1; }
+  .ctx-item .hint { font-size:11px; color:var(--muted); margin-left:8px; }
+  .ctx-sep { height:1px; background:var(--border); margin:5px 4px; }
+  .ctx-colors {
+    display:grid; grid-template-columns:repeat(6, 1fr);
+    gap:6px; padding:8px 10px 10px;
+  }
+  .ctx-color {
+    width:22px; height:22px; border-radius:50%;
+    cursor:pointer; border:2px solid transparent;
+    transition:transform .12s, border-color .12s;
+  }
+  .ctx-color:hover {
+    transform:scale(1.15); border-color:#fff;
+    box-shadow:0 0 0 2px var(--accent);
+  }
+  .ctx-color.current {
+    border-color:#1f2937;
+    box-shadow:0 0 0 2px #fff inset;
   }
 </style>
 </head>
@@ -166,29 +303,49 @@
   <header>
     <h1>📅 Планировщик + СПбГУ</h1>
     <div class="toolbar">
-      <button class="btn secondary" id="load-current">⬇ Загрузить текущую неделю СПбГУ</button>
-      <button class="btn secondary" id="load-next">⬇ Загрузить следующую</button>
-      <span class="status" id="status"></span>
+      <button class="btn secondary" id="topics-toggle">⚙️ Управление темами</button>
     </div>
   </header>
 
-  <div class="quick-add">
-    <input type="text" id="f-title" placeholder="Название задачи...">
-    <select id="f-topic"></select>
-    <input type="date" id="f-date">
-    <input type="time" id="f-time" value="10:00">
-    <button class="btn" id="add-btn">+ Добавить</button>
+  <!-- Панель тем -->
+  <div class="topics-panel" id="topics-panel">
+    <h3>Создание, переименование и удаление тем</h3>
+    <div class="topic-list" id="topic-list"></div>
+    <div class="new-topic-form">
+      <div class="topic-color-dot" id="new-color-dot" style="background:#e11d48">
+        <input type="color" id="new-color" value="#e11d48">
+      </div>
+      <input type="text" id="new-topic-name" placeholder="Название новой темы...">
+      <button class="btn small" id="new-topic-btn">+ Создать</button>
+    </div>
   </div>
 
   <div class="weeks-wrap">
     <div class="week-panel current" id="panel-0">
-      <h2>Текущая неделя</h2>
-      <div class="range" id="range-0"></div>
+      <div class="week-head">
+        <div>
+          <h2>Текущая неделя <span class="range" id="range-0"></span></h2>
+        </div>
+        <div class="week-head-actions">
+          <button class="btn secondary small" data-load="current">⬇ Загрузить СПбГУ</button>
+          <button class="btn danger small" data-clear="0">🗑 Очистить СПбГУ</button>
+          <span class="status" id="status-0"></span>
+        </div>
+      </div>
       <div class="cal-grid" id="cal-0"></div>
     </div>
+
     <div class="week-panel next" id="panel-1">
-      <h2>Следующая неделя</h2>
-      <div class="range" id="range-1"></div>
+      <div class="week-head">
+        <div>
+          <h2>Следующая неделя <span class="range" id="range-1"></span></h2>
+        </div>
+        <div class="week-head-actions">
+          <button class="btn secondary small" data-load="next">⬇ Загрузить СПбГУ</button>
+          <button class="btn danger small" data-clear="1">🗑 Очистить СПбГУ</button>
+          <span class="status" id="status-1"></span>
+        </div>
+      </div>
       <div class="cal-grid" id="cal-1"></div>
     </div>
   </div>
@@ -197,24 +354,7 @@
 <!-- Модалка -->
 <div class="modal-backdrop" id="modal">
   <div class="modal">
-    <h3>Новая задача</h3>
-    <div class="field">
-      <label>Дата</label>
-      <input type="date" id="m-date" readonly>
-    </div>
-    <div class="field">
-      <label>Время начала</label>
-      <input type="time" id="m-time" step="300">
-    </div>
-    <div class="field">
-      <label>Длительность</label>
-      <select id="m-duration">
-        <option value="45">45 мин</option>
-        <option value="60">1 час</option>
-        <option value="90" selected>1.5 часа</option>
-        <option value="120">2 часа</option>
-      </select>
-    </div>
+    <h3 id="modal-title">Новая задача</h3>
     <div class="field">
       <label>Название</label>
       <input type="text" id="m-title" placeholder="Что делаем?">
@@ -223,6 +363,20 @@
       <label>Тема</label>
       <select id="m-topic"></select>
     </div>
+    <div class="row2">
+      <div class="field">
+        <label>Начало</label>
+        <input type="time" id="m-time" step="300">
+      </div>
+      <div class="field">
+        <label>Конец</label>
+        <input type="time" id="m-time-end" step="300">
+      </div>
+    </div>
+    <div class="field">
+      <label>Дата</label>
+      <input type="date" id="m-date">
+    </div>
     <div class="actions">
       <button class="btn secondary" id="m-cancel">Отмена</button>
       <button class="btn" id="m-save">Сохранить</button>
@@ -230,26 +384,68 @@
   </div>
 </div>
 
+<!-- Контекстное меню (должно быть в DOM до скрипта) -->
+<div class="ctx-menu" id="ctx-menu"></div>
+
 <script>
 (function() {
-  const TASKS_KEY = 'planner-tasks-v5';
-  const TOPICS_KEY = 'planner-topics-v5';
+  const TASKS_KEY = 'planner-tasks-v6';
+  const TOPICS_KEY = 'planner-topics-v6';
 
   const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  const SLOT_START_HOUR = 8;   // сетка с 08:00
-  const SLOT_END_HOUR = 22;    // до 22:00
-  const HOUR_PX = 60;          // высота часа
-  const TOTAL_HOURS = SLOT_END_HOUR - SLOT_START_HOUR;
+  const START_HOUR = 6;
+  const END_HOUR = 24;
+  const HOUR_PX = 60;
+  const TOTAL_HOURS = END_HOUR - START_HOUR;
+  const MIN_DURATION = 15;
 
-  const DEFAULT_TOPICS = [
-    { id:'work',   name:'Работа',   color:'#4f46e5' },
-    { id:'study',  name:'Учёба',    color:'#0891b2' },
-    { id:'spbu',   name:'СПбГУ',    color:'#4f46e5' },
-    { id:'health', name:'Здоровье', color:'#059669' },
-    { id:'personal',name:'Личное',  color:'#d97706' },
+  // Палитра: цвета далеко друг от друга
+  const PALETTE = [
+    '#e11d48', '#0ea5e9', '#65a30d', '#d97706', '#7c3aed',
+    '#dc2626', '#059669', '#ca8a04', '#db2777', '#2563eb',
+    '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#4d7c0f',
+    '#be123c', '#1d4ed8', '#a16207', '#c026d3', '#047857',
   ];
 
-  // ── Даты ────────────────────────────────────────────────────────────────
+  function hexToRgb(hex) {
+    const h = hex.replace('#','');
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  }
+  function colorDistance(a, b) {
+    const [r1,g1,b1] = hexToRgb(a), [r2,g2,b2] = hexToRgb(b);
+    return Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
+  }
+  function pickDistinctColor(existingColors, minDist = 90) {
+    for (const c of PALETTE) {
+      if (existingColors.every(ec => colorDistance(c, ec) >= minDist)) return c;
+    }
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const h = Math.floor(Math.random() * 360);
+      const s = 65 + Math.floor(Math.random() * 25);
+      const l = 40 + Math.floor(Math.random() * 15);
+      const hex = hslToHex(h, s, l);
+      if (existingColors.every(ec => colorDistance(hex, ec) >= minDist)) return hex;
+    }
+    return PALETTE[existingColors.length % PALETTE.length];
+  }
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h/30) % 12;
+    const a = s * Math.min(l, 1-l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+    const toHex = x => Math.round(x*255).toString(16).padStart(2,'0');
+    return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+  }
+
+  const DEFAULT_TOPICS = [
+    { id:'work',    name:'Работа',   color: PALETTE[0] },
+    { id:'study',   name:'Учёба',    color: PALETTE[1] },
+    { id:'spbu',    name:'СПбГУ',    color: PALETTE[2] },
+    { id:'health',  name:'Здоровье', color: PALETTE[3] },
+    { id:'personal',name:'Личное',   color: PALETTE[4] },
+  ];
+
+  // Даты
   function getMonday(d) {
     d = new Date(d);
     const day = d.getDay();
@@ -278,7 +474,7 @@
     return d.toLocaleDateString('ru-RU', { day:'numeric', month:'short' });
   }
 
-  // ── Хранилище ───────────────────────────────────────────────────────────
+  // Хранилище
   function load(key, def) {
     try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : def; }
     catch(e) { return def; }
@@ -289,14 +485,30 @@
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
     localStorage.setItem(TOPICS_KEY, JSON.stringify(topics));
   }
-
   function getTopic(id) {
     return topics.find(t => t.id === id) || { name:'—', color:'#9ca3af' };
   }
+  function genId() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Время
+  function timeToMinutes(t) {
+    if (!t) return 0;
+    const [h,m] = t.split(':').map(Number);
+    return h*60 + m;
+  }
+  function minutesToTime(m) {
+    m = Math.max(0, Math.min(24*60, Math.round(m)));
+    return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  }
+  function snap15Down(m) { return Math.floor(m / 15) * 15; }
 
   // ── Рендер ──────────────────────────────────────────────────────────────
   function render() {
-    // Заголовки диапазонов
     for (let w = 0; w < 2; w++) {
       const mon = mondayOf(w), sun = dateForDay(w, 6);
       document.getElementById('range-' + w).textContent =
@@ -304,14 +516,13 @@
     }
     renderWeek(0, 'cal-0');
     renderWeek(1, 'cal-1');
-    fillTopicSelects();
   }
 
   function renderWeek(weekIndex, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
+    container.style.setProperty('--hours', TOTAL_HOURS);
 
-    // Верхняя строка: пустой угол + 7 дней
     const corner = document.createElement('div');
     corner.className = 'cal-header';
     container.appendChild(corner);
@@ -325,19 +536,24 @@
       container.appendChild(h);
     }
 
-    // Колонка времени
     const timeCol = document.createElement('div');
     timeCol.className = 'cal-time-col';
-    for (let h = SLOT_START_HOUR; h < SLOT_END_HOUR; h++) {
+    timeCol.style.height = (TOTAL_HOURS * HOUR_PX) + 'px';
+    for (let h = START_HOUR; h < END_HOUR; h++) {
       const lbl = document.createElement('div');
       lbl.className = 'cal-time-label';
       lbl.style.height = HOUR_PX + 'px';
-      lbl.textContent = String(h).padStart(2,'0') + ':00';
+      lbl.innerHTML = `<span class="tick">${String(h).padStart(2,'0')}:00</span>`;
       timeCol.appendChild(lbl);
     }
+    const lastLbl = document.createElement('div');
+    lastLbl.className = 'cal-time-label';
+    lastLbl.style.height = '0';
+    lastLbl.style.overflow = 'visible';
+    lastLbl.innerHTML = `<span class="tick" style="margin-top:-5px">24:00</span>`;
+    timeCol.appendChild(lastLbl);
     container.appendChild(timeCol);
 
-    // 7 колонок-дней
     for (let i = 0; i < 7; i++) {
       const d = dateForDay(weekIndex, i);
       const iso = isoDate(d);
@@ -349,23 +565,12 @@
       col.dataset.week = weekIndex;
       col.dataset.day = i;
 
-      const dayTasks = tasks.filter(t => t.dateKey === iso);
+      const dayTasks = tasks.filter(t => t.dateKey === iso)
+        .sort((a,b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
-      dayTasks.forEach(t => {
-        const el = renderEvent(t);
-        col.appendChild(el);
-      });
+      dayTasks.forEach(t => col.appendChild(renderEvent(t)));
 
-      // Клик по пустому месту — открыть модалку
-      col.addEventListener('click', e => {
-        if (e.target.closest('.event')) return;
-        const rect = col.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        const totalMin = SLOT_START_HOUR * 60 + (y / HOUR_PX) * 60;
-        const h = Math.floor(totalMin / 60);
-        const m = Math.round((totalMin % 60) / 15) * 15;
-        openModal(iso, `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-      });
+      attachDragToCreate(col);
 
       container.appendChild(col);
     }
@@ -373,16 +578,17 @@
 
   function renderEvent(t) {
     const topic = getTopic(t.topicId);
+    const bgColor = t.colorOverride || topic.color;
     const startMin = timeToMinutes(t.startTime || '10:00');
-    const endMin = timeToMinutes(t.endTime || addMinutes(t.startTime, 90));
-    const top = ((startMin - SLOT_START_HOUR*60) / 60) * HOUR_PX;
-    const height = Math.max(20, ((endMin - startMin) / 60) * HOUR_PX - 2);
+    const endMin = Math.max(startMin + MIN_DURATION, timeToMinutes(t.endTime || '11:30'));
+    const top = ((startMin - START_HOUR*60) / 60) * HOUR_PX;
+    const height = Math.max(18, ((endMin - startMin) / 60) * HOUR_PX - 2);
 
     const el = document.createElement('div');
     el.className = 'event' + (t.done ? ' done' : '');
     el.style.top = top + 'px';
     el.style.height = height + 'px';
-    el.style.background = topic.color;
+    el.style.background = bgColor;
     el.dataset.id = t.id;
 
     const metaParts = [];
@@ -391,141 +597,621 @@
 
     el.innerHTML = `
       <div class="title">${escapeHtml(t.title)}</div>
-      ${height > 35 ? `<div class="meta">${escapeHtml(metaParts.join(' · '))}</div>` : ''}
+      ${height > 40 ? `<div class="time-lbl">${t.startTime}–${t.endTime}</div>` : ''}
+      ${height > 55 && metaParts.length ? `<div class="meta">${escapeHtml(metaParts.join(' · '))}</div>` : ''}
       <button class="del" title="Удалить">✕</button>
+      <div class="resize-handle"></div>
     `;
 
+    // Удаление (без подтверждения)
+    el.querySelector('.del').addEventListener('click', e => {
+      e.stopPropagation();
+      tasks = tasks.filter(x => x.id !== t.id);
+      save(); render();
+    });
+
+    // Клик — toggle done (если не тащили)
+    let dragMoved = false;
     el.addEventListener('click', e => {
-      if (e.target.classList.contains('del')) {
-        tasks = tasks.filter(x => x.id !== t.id);
-        save(); render();
-        e.stopPropagation();
-        return;
-      }
-      // клик по телу — переключить done
+      if (dragMoved) { dragMoved = false; return; }
+      if (e.target.closest('.del')) return;
+      if (e.target.closest('.resize-handle')) return;
       t.done = !t.done;
       save(); render();
     });
 
+    // Правый клик — контекстное меню
+    el.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openCtxMenu(e.clientX, e.clientY, t);
+    });
+
+    // Drag & drop и resize
+    attachDragMove(el, t, () => { dragMoved = true; });
+    attachResize(el, t, () => { dragMoved = true; });
+
     return el;
   }
 
-  function timeToMinutes(t) {
-    if (!t) return 0;
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  }
-  function addMinutes(t, m) {
-    const total = timeToMinutes(t) + m;
-    const h = Math.floor(total / 60), mm = total % 60;
-    return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-  }
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c =>
-      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // ── Контекстное меню ────────────────────────────────────────────────────
+  const ctxMenu = document.getElementById('ctx-menu');
+  let ctxOpen = false;
+
+  function sep() {
+    const s = document.createElement('div');
+    s.className = 'ctx-sep';
+    return s;
   }
 
-  // ── Селекты тем ─────────────────────────────────────────────────────────
-  function fillTopicSelects() {
-    const ids = ['f-topic', 'm-topic'];
-    ids.forEach(id => {
-      const sel = document.getElementById(id);
-      const cur = sel.value;
-      sel.innerHTML = '';
-      topics.forEach(tp => {
-        const o = document.createElement('option');
-        o.value = tp.id; o.textContent = tp.name;
-        sel.appendChild(o);
+  function makeItem(ico, label, hint, onClick, cls) {
+    const el = document.createElement('div');
+    el.className = 'ctx-item' + (cls ? ' ' + cls : '');
+    el.innerHTML = `<span class="ico">${ico}</span><span class="lbl">${label}</span>${
+      hint ? `<span class="hint">${hint}</span>` : ''
+    }`;
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      closeCtxMenu();
+      onClick();
+    });
+    return el;
+  }
+
+  function openCtxMenu(x, y, task) {
+    ctxMenu.innerHTML = '';
+
+    ctxMenu.appendChild(makeItem(
+      task.done ? '↺' : '✓',
+      task.done ? 'Снять отметку' : 'Отметить выполненной',
+      '',
+      () => { task.done = !task.done; save(); render(); }
+    ));
+
+    ctxMenu.appendChild(makeItem('✏️', 'Редактировать', '', () => {
+      openModal(task.dateKey, task.startTime, task.endTime, task.id);
+    }));
+
+    ctxMenu.appendChild(makeItem('🔗', 'Изменить тему', '', () => {
+      openTopicPicker(task);
+    }));
+
+    ctxMenu.appendChild(makeItem('🎨', 'Сменить цвет', '', () => {
+      openColorPicker(task);
+    }));
+
+    ctxMenu.appendChild(sep());
+
+    ctxMenu.appendChild(makeItem('📋', 'Дублировать', '', () => {
+      const copy = JSON.parse(JSON.stringify(task));
+      copy.id = genId() + '-' + Date.now();
+      copy.title = task.title + ' (копия)';
+      tasks.push(copy);
+      save(); render();
+    }));
+
+    ctxMenu.appendChild(makeItem('➡️', 'На следующую неделю', '', () => {
+      const d = new Date(task.dateKey + 'T00:00:00');
+      d.setDate(d.getDate() + 7);
+      const copy = JSON.parse(JSON.stringify(task));
+      copy.id = genId() + '-' + Date.now();
+      copy.dateKey = isoDate(d);
+      copy.done = false;
+      if (copy.source === 'spbu') copy.source = 'manual';
+      tasks.push(copy);
+      save(); render();
+    }));
+
+    ctxMenu.appendChild(sep());
+
+    ctxMenu.appendChild(makeItem('🗑', 'Удалить', '', () => {
+      tasks = tasks.filter(x => x.id !== task.id);
+      save(); render();
+    }, 'danger'));
+
+    ctxMenu.classList.add('open');
+    ctxOpen = true;
+
+    const rect = ctxMenu.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let px = x, py = y;
+    if (px + rect.width > vw - 8) px = vw - rect.width - 8;
+    if (py + rect.height > vh - 8) py = vh - rect.height - 8;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    ctxMenu.style.left = px + 'px';
+    ctxMenu.style.top  = py + 'px';
+  }
+
+  function closeCtxMenu() {
+    ctxMenu.classList.remove('open');
+    ctxOpen = false;
+  }
+
+  function repositionMenu() {
+    const rect = ctxMenu.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let px = parseInt(ctxMenu.style.left) || 8;
+    let py = parseInt(ctxMenu.style.top) || 8;
+    if (px + rect.width > vw - 8) px = vw - rect.width - 8;
+    if (py + rect.height > vh - 8) py = vh - rect.height - 8;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    ctxMenu.style.left = px + 'px';
+    ctxMenu.style.top  = py + 'px';
+  }
+
+  function openTopicPicker(task) {
+    ctxMenu.innerHTML = '';
+    const title = document.createElement('div');
+    title.className = 'ctx-item';
+    title.style.fontWeight = '600';
+    title.style.cursor = 'default';
+    title.innerHTML = '<span class="ico">🔗</span><span class="lbl">Выберите тему</span>';
+    ctxMenu.appendChild(title);
+    ctxMenu.appendChild(sep());
+
+    topics.forEach(tp => {
+      const el = document.createElement('div');
+      el.className = 'ctx-item';
+      el.innerHTML = `
+        <span class="ico">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${tp.color}"></span>
+        </span>
+        <span class="lbl">${escapeHtml(tp.name)}</span>
+        ${tp.id === task.topicId ? '<span class="hint">текущая</span>' : ''}
+      `;
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        task.topicId = tp.id;
+        delete task.colorOverride;
+        save(); render();
+        closeCtxMenu();
       });
-      if (cur && topics.some(t => t.id === cur)) sel.value = cur;
+      ctxMenu.appendChild(el);
+    });
+    repositionMenu();
+  }
+
+  function openColorPicker(task) {
+    ctxMenu.innerHTML = '';
+    const title = document.createElement('div');
+    title.className = 'ctx-item';
+    title.style.fontWeight = '600';
+    title.style.cursor = 'default';
+    title.innerHTML = '<span class="ico">🎨</span><span class="lbl">Цвет задачи</span>';
+    ctxMenu.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'ctx-colors';
+    PALETTE.forEach(c => {
+      const sw = document.createElement('div');
+      sw.className = 'ctx-color' + (task.colorOverride === c ? ' current' : '');
+      sw.style.background = c;
+      sw.title = c;
+      sw.addEventListener('click', e => {
+        e.stopPropagation();
+        task.colorOverride = c;
+        save(); render();
+        closeCtxMenu();
+      });
+      grid.appendChild(sw);
+    });
+    ctxMenu.appendChild(grid);
+
+    const reset = document.createElement('div');
+    reset.className = 'ctx-item';
+    reset.innerHTML = '<span class="ico">↺</span><span class="lbl">Вернуть цвет темы</span>';
+    reset.addEventListener('click', e => {
+      e.stopPropagation();
+      delete task.colorOverride;
+      save(); render();
+      closeCtxMenu();
+    });
+    ctxMenu.appendChild(sep());
+    ctxMenu.appendChild(reset);
+    repositionMenu();
+  }
+
+  // Глобальные обработчики закрытия меню
+  document.addEventListener('click', e => {
+    if (ctxOpen && !e.target.closest('.ctx-menu')) closeCtxMenu();
+  });
+  document.addEventListener('contextmenu', e => {
+    if (ctxOpen && !e.target.closest('.ctx-menu') && !e.target.closest('.event')) {
+      closeCtxMenu();
+    }
+  });
+  window.addEventListener('blur', () => { if (ctxOpen) closeCtxMenu(); });
+  window.addEventListener('resize', () => { if (ctxOpen) closeCtxMenu(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ctxOpen) closeCtxMenu();
+  });
+
+  // ── Drag & drop задачи ──────────────────────────────────────────────────
+  function attachDragMove(el, task, onMove) {
+    el.addEventListener('mousedown', e => {
+      if (e.target.closest('.del') || e.target.closest('.resize-handle')) return;
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const startX = e.clientX, startY = e.clientY;
+      const origStart = timeToMinutes(task.startTime);
+      const origEnd = timeToMinutes(task.endTime);
+      const duration = origEnd - origStart;
+      let moved = false;
+
+      const col = el.parentElement;
+      const grid = col.parentElement;
+      const origOpacity = el.style.opacity;
+      el.classList.add('dragging');
+
+      function onMouseMove(ev) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          if (!moved) { moved = true; onMove(); }
+        }
+
+        const rawMin = origStart + (dy / HOUR_PX) * 60;
+        let newStart = Math.max(START_HOUR*60, Math.min(END_HOUR*60 - duration, snap15Down(rawMin)));
+
+        const days = Array.from(grid.querySelectorAll('.cal-day'));
+        let targetDay = col;
+        for (const d of days) {
+          const r = d.getBoundingClientRect();
+          if (ev.clientX >= r.left && ev.clientX < r.right) { targetDay = d; break; }
+        }
+        if (targetDay !== el.parentElement) {
+          targetDay.appendChild(el);
+        }
+
+        const top = ((newStart - START_HOUR*60) / 60) * HOUR_PX;
+        el.style.top = top + 'px';
+
+        el.dataset._newStart = newStart;
+        el.dataset._newEnd = newStart + duration;
+        el.dataset._newDate = el.parentElement.dataset.date;
+      }
+
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        el.classList.remove('dragging');
+        el.style.opacity = origOpacity;
+
+        if (moved && el.dataset._newStart !== undefined) {
+          task.startTime = minutesToTime(+el.dataset._newStart);
+          task.endTime = minutesToTime(+el.dataset._newEnd);
+          task.dateKey = el.dataset._newDate;
+          delete el.dataset._newStart;
+          delete el.dataset._newEnd;
+          delete el.dataset._newDate;
+          save();
+          render();
+        }
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     });
   }
 
-  // ── Быстрое добавление ──────────────────────────────────────────────────
-  const fDate = document.getElementById('f-date');
-  const fTime = document.getElementById('f-time');
-  fDate.value = isoDate(today);
-  fTime.value = '10:00';
+  // ── Resize (тянем за нижний край) ───────────────────────────────────────
+  function attachResize(el, task, onResize) {
+    const handle = el.querySelector('.resize-handle');
+    if (!handle) return;
 
-  document.getElementById('add-btn').addEventListener('click', () => {
-    const title = document.getElementById('f-title').value.trim();
-    if (!title) { document.getElementById('f-title').focus(); return; }
-    const topicId = document.getElementById('f-topic').value;
-    const dateKey = fDate.value;
-    const startTime = fTime.value || '10:00';
-    const endTime = addMinutes(startTime, 90);
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    tasks.push({
-      id: Date.now() + Math.random().toString(36).slice(2),
-      title, topicId, dateKey, startTime, endTime, done:false, source:'manual'
+      const startY = e.clientY;
+      const origEnd = timeToMinutes(task.endTime);
+      const start = timeToMinutes(task.startTime);
+      let moved = false;
+
+      function onMove(ev) {
+        const dy = ev.clientY - startY;
+        if (Math.abs(dy) > 2) { if (!moved) { moved = true; onResize(); } }
+        const rawEnd = origEnd + (dy / HOUR_PX) * 60;
+        const newEnd = Math.max(start + MIN_DURATION, Math.min(END_HOUR*60, snap15Down(rawEnd)));
+        const h = Math.max(18, ((newEnd - start) / 60) * HOUR_PX - 2);
+        el.style.height = h + 'px';
+        el.dataset._resizeEnd = newEnd;
+      }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (moved && el.dataset._resizeEnd !== undefined) {
+          task.endTime = minutesToTime(+el.dataset._resizeEnd);
+          delete el.dataset._resizeEnd;
+          save();
+          render();
+        }
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     });
-    save(); render();
-    document.getElementById('f-title').value = '';
-    document.getElementById('f-title').focus();
-  });
-  document.getElementById('f-title').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('add-btn').click();
-  });
+  }
+
+  // ── Протяжка мышью для создания задачи ──────────────────────────────────
+  function attachDragToCreate(col) {
+    col.addEventListener('mousedown', e => {
+      if (e.target.closest('.event')) return;
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const rect = col.getBoundingClientRect();
+
+      function yToMinutes(clientY) {
+        const y = clientY - rect.top;
+        const raw = (y / HOUR_PX) * 60 + START_HOUR * 60;
+        return Math.max(START_HOUR * 60, Math.min(END_HOUR * 60, snap15Down(raw)));
+      }
+
+      const startMin = yToMinutes(e.clientY);
+
+      const preview = document.createElement('div');
+      preview.className = 'drag-preview';
+      col.appendChild(preview);
+
+      function updatePreview(clientY) {
+        const curMin = yToMinutes(clientY);
+        const a = Math.min(startMin, curMin);
+        let b = Math.max(startMin, curMin);
+        if (b === a) b = a + MIN_DURATION;
+
+        const top = ((a - START_HOUR*60) / 60) * HOUR_PX;
+        const h = Math.max(15, ((b - a) / 60) * HOUR_PX);
+        preview.style.top = top + 'px';
+        preview.style.height = h + 'px';
+        preview.dataset.a = a;
+        preview.dataset.b = b;
+      }
+      updatePreview(e.clientY);
+
+      function onMove(ev) { updatePreview(ev.clientY); }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+
+        const a = +preview.dataset.a;
+        const b = +preview.dataset.b;
+        preview.remove();
+
+        openModal(col.dataset.date, minutesToTime(a), minutesToTime(b));
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
 
   // ── Модалка ─────────────────────────────────────────────────────────────
   const modal = document.getElementById('modal');
-  const mDate = document.getElementById('m-date');
-  const mTime = document.getElementById('m-time');
-  const mDur  = document.getElementById('m-duration');
-  const mTitle= document.getElementById('m-title');
-  const mTopic= document.getElementById('m-topic');
+  const mTitle = document.getElementById('m-title');
+  const mTopic = document.getElementById('m-topic');
+  const mTime  = document.getElementById('m-time');
+  const mTimeEnd = document.getElementById('m-time-end');
+  const mDate  = document.getElementById('m-date');
+  const modalTitle = document.getElementById('modal-title');
 
-  function openModal(dateIso, timeStr) {
-    mDate.value = dateIso;
-    mTime.value = timeStr;
-    mTitle.value = '';
+  let editingTaskId = null;
+
+  function fillTopicsSelect() {
+    const cur = mTopic.value;
+    mTopic.innerHTML = '';
+    topics.forEach(tp => {
+      const o = document.createElement('option');
+      o.value = tp.id; o.textContent = tp.name;
+      mTopic.appendChild(o);
+    });
+    if (cur && topics.some(t => t.id === cur)) mTopic.value = cur;
+  }
+
+  function openModal(dateIso, timeFrom, timeTo, taskId) {
+    editingTaskId = taskId || null;
+    modalTitle.textContent = taskId ? 'Редактирование задачи' : 'Новая задача';
+    fillTopicsSelect();
+
+    if (taskId) {
+      const t = tasks.find(x => x.id === taskId);
+      if (t) {
+        mTitle.value = t.title;
+        mTopic.value = t.topicId;
+        mTime.value = t.startTime;
+        mTimeEnd.value = t.endTime;
+        mDate.value = t.dateKey;
+      }
+    } else {
+      mTitle.value = '';
+      mTime.value = timeFrom || '10:00';
+      mTimeEnd.value = timeTo || '11:00';
+      mDate.value = dateIso;
+    }
+
     modal.classList.add('open');
     setTimeout(() => mTitle.focus(), 50);
   }
-  function closeModal() { modal.classList.remove('open'); }
+  function closeModal() { modal.classList.remove('open'); editingTaskId = null; }
 
   document.getElementById('m-cancel').addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.getElementById('m-save').addEventListener('click', () => {
     const title = mTitle.value.trim();
     if (!title) { mTitle.focus(); return; }
-    const dur = parseInt(mDur.value);
-    tasks.push({
-      id: Date.now() + Math.random().toString(36).slice(2),
-      title,
-      topicId: mTopic.value,
-      dateKey: mDate.value,
-      startTime: mTime.value,
-      endTime: addMinutes(mTime.value, dur),
-      done:false, source:'manual'
-    });
+    let s = mTime.value || '10:00';
+    let en = mTimeEnd.value || minutesToTime(timeToMinutes(s) + 60);
+    if (timeToMinutes(en) <= timeToMinutes(s)) {
+      en = minutesToTime(timeToMinutes(s) + MIN_DURATION);
+    }
+
+    if (editingTaskId) {
+      const t = tasks.find(x => x.id === editingTaskId);
+      if (t) {
+        t.title = title;
+        t.topicId = mTopic.value;
+        t.startTime = s;
+        t.endTime = en;
+        t.dateKey = mDate.value;
+      }
+    } else {
+      tasks.push({
+        id: genId() + '-' + Date.now(),
+        title,
+        topicId: mTopic.value,
+        dateKey: mDate.value,
+        startTime: s,
+        endTime: en,
+        done: false,
+        source: 'manual'
+      });
+    }
     save(); render(); closeModal();
   });
-  mTitle.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('m-save').click(); });
+  mTitle.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('m-save').click();
+  });
 
-  // ── Загрузка СПбГУ ──────────────────────────────────────────────────────
-  const statusEl = document.getElementById('status');
+  // ── Управление темами ──────────────────────────────────────────────────
+  const topicsPanel = document.getElementById('topics-panel');
+  const topicListEl = document.getElementById('topic-list');
+  const newColorInput = document.getElementById('new-color');
+  const newColorDot = document.getElementById('new-color-dot');
+  const newTopicName = document.getElementById('new-topic-name');
 
-  async function loadSpbu(week) {
-    statusEl.textContent = 'Загрузка...';
-    statusEl.className = 'status';
+  document.getElementById('topics-toggle').addEventListener('click', () => {
+    topicsPanel.classList.toggle('open');
+    if (topicsPanel.classList.contains('open')) renderTopicsPanel();
+  });
+
+  newColorInput.addEventListener('input', function() {
+    newColorDot.style.background = this.value;
+  });
+
+  function countTasksForTopic(id) {
+    return tasks.filter(t => t.topicId === id).length;
+  }
+
+  function renderTopicsPanel() {
+    topicListEl.innerHTML = '';
+    topics.forEach(tp => {
+      const row = document.createElement('div');
+      row.className = 'topic-row';
+
+      const dot = document.createElement('div');
+      dot.className = 'topic-color-dot';
+      dot.style.background = tp.color;
+      const ci = document.createElement('input');
+      ci.type = 'color'; ci.value = tp.color;
+      ci.addEventListener('input', function() {
+        tp.color = this.value;
+        dot.style.background = this.value;
+        save(); render();
+      });
+      dot.appendChild(ci);
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'topic-name-input';
+      nameInput.value = tp.name;
+      nameInput.addEventListener('change', function() {
+        const v = this.value.trim();
+        if (!v) { this.value = tp.name; return; }
+        tp.name = v;
+        save(); render();
+      });
+      nameInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') this.blur();
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'topic-row-actions';
+
+      const cnt = document.createElement('span');
+      cnt.className = 'task-count';
+      const c = countTasksForTopic(tp.id);
+      cnt.textContent = c > 0 ? `${c} задач` : 'нет задач';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn del';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Удалить тему';
+      delBtn.addEventListener('click', () => deleteTopic(tp));
+
+      actions.appendChild(cnt);
+      actions.appendChild(delBtn);
+
+      row.appendChild(dot);
+      row.appendChild(nameInput);
+      row.appendChild(actions);
+      topicListEl.appendChild(row);
+    });
+  }
+
+  function deleteTopic(tp) {
+    const cnt = countTasksForTopic(tp.id);
+    let msg = `Удалить тему «${tp.name}»?`;
+    if (cnt > 0) msg += `\nВ этой теме ${cnt} задач — они тоже будут удалены.`;
+    if (!confirm(msg)) return;
+
+    topics = topics.filter(t => t.id !== tp.id);
+    if (topics.length === 0) topics = [{ id: genId(), name:'Другое', color: PALETTE[0] }];
+    tasks = tasks.filter(t => t.topicId !== tp.id);
+
+    save();
+    renderTopicsPanel();
+    render();
+  }
+
+  document.getElementById('new-topic-btn').addEventListener('click', () => {
+    const name = newTopicName.value.trim();
+    if (!name) { newTopicName.focus(); return; }
+    if (topics.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      alert('Тема с таким названием уже существует');
+      return;
+    }
+    const existingColors = topics.map(t => t.color);
+    topics.push({
+      id: genId(),
+      name,
+      color: newColorInput.value || pickDistinctColor(existingColors)
+    });
+    save();
+    newTopicName.value = '';
+    newColorInput.value = pickDistinctColor(topics.map(t => t.color));
+    newColorDot.style.background = newColorInput.value;
+    renderTopicsPanel();
+    render();
+    newTopicName.focus();
+  });
+  newTopicName.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('new-topic-btn').click();
+  });
+
+  // ── Загрузка СПбГУ / Очистка ────────────────────────────────────────────
+  function setStatus(w, text, kind) {
+    const el = document.getElementById('status-' + w);
+    el.textContent = text;
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  async function loadSpbu(week, weekIndex) {
+    setStatus(weekIndex, 'Загрузка...', '');
     try {
       const r = await fetch('/api/schedule?week=' + week);
       const data = await r.json();
-      if (data.error) {
-        statusEl.textContent = 'Ошибка: ' + data.error;
-        statusEl.className = 'status error';
-        return;
-      }
+      if (data.error) { setStatus(weekIndex, 'Ошибка: ' + data.error, 'error'); return; }
 
-      // Убедимся, что тема СПбГУ существует
       let spbuTopic = topics.find(t => t.id === 'spbu');
       if (!spbuTopic) {
-        spbuTopic = { id:'spbu', name:'СПбГУ', color:'#4f46e5' };
+        spbuTopic = { id:'spbu', name:'СПбГУ', color: pickDistinctColor(topics.map(t=>t.color)) };
         topics.push(spbuTopic);
       }
 
-      // Удаляем старые занятия СПбГУ за эту неделю, чтобы не дублировать
       const monday = data.monday;
       const weekDates = new Set();
       for (let i = 0; i < 7; i++) {
@@ -535,7 +1221,6 @@
       }
       tasks = tasks.filter(t => !(t.source === 'spbu' && weekDates.has(t.dateKey)));
 
-      // Добавляем новые
       data.lessons.forEach(l => {
         tasks.push({
           id: 'spbu-' + l.dateKey + '-' + Math.random().toString(36).slice(2,7),
@@ -543,26 +1228,48 @@
           topicId: 'spbu',
           dateKey: l.dateKey,
           startTime: l.startTime || '09:30',
-          endTime: l.endTime || addMinutes(l.startTime || '09:30', 90),
+          endTime: l.endTime || minutesToTime(timeToMinutes(l.startTime || '09:30') + 90),
           place: l.place,
           teacher: l.teacher,
           done: false,
           source: 'spbu',
         });
       });
-
       save(); render();
-      statusEl.textContent = `Загружено занятий: ${data.lessons.length}`;
-      statusEl.className = 'status ok';
-      setTimeout(() => { statusEl.textContent = ''; }, 4000);
+      setStatus(weekIndex, `Загружено: ${data.lessons.length}`, 'ok');
+      setTimeout(() => setStatus(weekIndex, '', ''), 3500);
     } catch (e) {
-      statusEl.textContent = 'Ошибка: ' + e.message;
-      statusEl.className = 'status error';
+      setStatus(weekIndex, 'Ошибка: ' + e.message, 'error');
     }
   }
 
-  document.getElementById('load-current').addEventListener('click', () => loadSpbu('current'));
-  document.getElementById('load-next').addEventListener('click', () => loadSpbu('next'));
+  function clearSpbu(weekIndex) {
+    const mon = mondayOf(weekIndex);
+    const weekDates = new Set();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(d.getDate() + i);
+      weekDates.add(isoDate(d));
+    }
+    const before = tasks.length;
+    tasks = tasks.filter(t => !(t.source === 'spbu' && weekDates.has(t.dateKey)));
+    const removed = before - tasks.length;
+    save(); render();
+    setStatus(weekIndex, `Удалено: ${removed}`, 'ok');
+    setTimeout(() => setStatus(weekIndex, '', ''), 2500);
+  }
+
+  document.querySelectorAll('[data-load]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const week = btn.dataset.load;
+      const weekIndex = week === 'next' ? 1 : 0;
+      loadSpbu(week, weekIndex);
+    });
+  });
+  document.querySelectorAll('[data-clear]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearSpbu(parseInt(btn.dataset.clear));
+    });
+  });
 
   // ── Поехали ─────────────────────────────────────────────────────────────
   render();
