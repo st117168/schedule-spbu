@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Планировщик + СПбГУ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f4f6fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+    --accent:#4f46e5; --border:#e5e7eb; --today:#f59e0b;
+  }
+  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:var(--text); padding:20px; line-height:1.4; }
+  .container { max-width:1600px; margin:0 auto; }
+
+  header { display:flex; justify-content:space-between; align-items:center;
+           flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+  h1 { font-size:22px; font-weight:700; }
+
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .btn { padding:9px 16px; border:none; border-radius:8px;
+         background:var(--accent); color:#fff; font-size:13px; font-weight:600;
+         cursor:pointer; font-family:inherit; transition:.15s; }
+  .btn:hover { background:#4338ca; }
+  .btn.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  .btn.secondary:hover { background:#eef2ff; }
+  .btn:disabled { opacity:.5; cursor:wait; }
+
+  /* Быстрая форма добавления */
+  .quick-add {
+    background:var(--card); border-radius:12px; padding:12px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px;
+  }
+  .quick-add input, .quick-add select {
+    padding:9px 11px; border:1px solid var(--border); border-radius:8px;
+    font-size:13px; font-family:inherit; background:#fff; color:var(--text);
+  }
+  .quick-add input:focus, .quick-add select:focus {
+    outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;
+  }
+
+  /* Двухколоночный вид недель */
+  .weeks-wrap {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  }
+
+  .week-panel {
+    background:var(--card); border-radius:14px; padding:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .week-panel.next { background:#faf7ff; }
+
+  .week-panel h2 {
+    font-size:15px; font-weight:700; margin-bottom:4px;
+  }
+  .week-panel.current h2 { color:var(--accent); }
+  .week-panel.next h2 { color:#8b5cf6; }
+  .week-panel .range { font-size:12px; color:var(--muted); margin-bottom:12px; }
+
+  /* Сетка: 1 колонка времени + 7 дней */
+  .cal-grid {
+    display:grid;
+    grid-template-columns:56px repeat(7,1fr);
+    gap:2px;
+    position:relative;
+    max-height:70vh;
+    overflow-y:auto;
+  }
+
+  .cal-header {
+    font-size:11px; font-weight:700; text-align:center; padding:6px 2px;
+    border-bottom:2px solid var(--border); position:sticky; top:0;
+    background:inherit; z-index:2;
+  }
+  .week-panel.next .cal-header { border-color:#8b5cf6; }
+  .week-panel.current .cal-header { border-color:var(--accent); }
+  .cal-header .date { display:block; font-weight:400; color:var(--muted); font-size:10px; }
+  .cal-header.today { color:var(--today); }
+  .cal-header.today .date { color:var(--today); font-weight:600; }
+
+  /* Слоты времени */
+  .cal-time-col { position:relative; }
+  .cal-time-label {
+    font-size:10px; color:var(--muted); text-align:right;
+    padding-right:6px; height:60px; line-height:1;
+    display:flex; align-items:flex-start; justify-content:flex-end;
+    padding-top:2px;
+  }
+
+  /* День — вертикальная колонка */
+  .cal-day {
+    position:relative;
+    border-left:1px solid var(--border);
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 59px,
+        #eef0f4 59px,
+        #eef0f4 60px
+      );
+    min-height:960px; /* 16 слотов × 60px */
+  }
+  .cal-day.today { background-color:#fffbf0; }
+
+  /* Задача как блок на шкале */
+  .event {
+    position:absolute;
+    left:2px; right:2px;
+    border-radius:6px;
+    padding:4px 6px;
+    font-size:11px;
+    color:#fff;
+    overflow:hidden;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(0,0,0,.15);
+    transition:.15s;
+    z-index:1;
+  }
+  .event:hover { transform:scale(1.02); z-index:5; box-shadow:0 3px 8px rgba(0,0,0,.25); }
+  .event.done { opacity:.55; text-decoration:line-through; }
+  .event .title { font-weight:600; line-height:1.2; word-break:break-word; }
+  .event .meta { font-size:9px; opacity:.85; margin-top:2px; }
+  .event .del {
+    position:absolute; top:2px; right:2px;
+    width:14px; height:14px; border-radius:3px;
+    background:rgba(255,255,255,.9); color:#111; border:none;
+    font-size:10px; line-height:1; cursor:pointer;
+    opacity:0; transition:.15s; padding:0;
+  }
+  .event:hover .del { opacity:1; }
+
+  /* Модалка для создания задачи кликом по сетке */
+  .modal-backdrop {
+    position:fixed; inset:0; background:rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center; z-index:100;
+  }
+  .modal-backdrop.open { display:flex; }
+  .modal {
+    background:#fff; border-radius:12px; padding:20px; width:380px;
+    box-shadow:0 10px 40px rgba(0,0,0,.3);
+  }
+  .modal h3 { font-size:15px; margin-bottom:12px; }
+  .modal .field { margin-bottom:10px; display:flex; flex-direction:column; gap:4px; }
+  .modal label { font-size:12px; color:var(--muted); }
+  .modal input, .modal select {
+    padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+    font-size:13px; font-family:inherit;
+  }
+  .modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+
+  .status {
+    font-size:12px; color:var(--muted); margin-left:8px;
+  }
+  .status.error { color:#ef4444; }
+  .status.ok { color:#10b981; }
+
+  @media (max-width:1100px) {
+    .weeks-wrap { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📅 Планировщик + СПбГУ</h1>
+    <div class="toolbar">
+      <button class="btn secondary" id="load-current">⬇ Загрузить текущую неделю СПбГУ</button>
+      <button class="btn secondary" id="load-next">⬇ Загрузить следующую</button>
+      <span class="status" id="status"></span>
+    </div>
+  </header>
+
+  <div class="quick-add">
+    <input type="text" id="f-title" placeholder="Название задачи...">
+    <select id="f-topic"></select>
+    <input type="date" id="f-date">
+    <input type="time" id="f-time" value="10:00">
+    <button class="btn" id="add-btn">+ Добавить</button>
+  </div>
+
+  <div class="weeks-wrap">
+    <div class="week-panel current" id="panel-0">
+      <h2>Текущая неделя</h2>
+      <div class="range" id="range-0"></div>
+      <div class="cal-grid" id="cal-0"></div>
+    </div>
+    <div class="week-panel next" id="panel-1">
+      <h2>Следующая неделя</h2>
+      <div class="range" id="range-1"></div>
+      <div class="cal-grid" id="cal-1"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3>Новая задача</h3>
+    <div class="field">
+      <label>Дата</label>
+      <input type="date" id="m-date" readonly>
+    </div>
+    <div class="field">
+      <label>Время начала</label>
+      <input type="time" id="m-time" step="300">
+    </div>
+    <div class="field">
+      <label>Длительность</label>
+      <select id="m-duration">
+        <option value="45">45 мин</option>
+        <option value="60">1 час</option>
+        <option value="90" selected>1.5 часа</option>
+        <option value="120">2 часа</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Название</label>
+      <input type="text" id="m-title" placeholder="Что делаем?">
+    </div>
+    <div class="field">
+      <label>Тема</label>
+      <select id="m-topic"></select>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" id="m-cancel">Отмена</button>
+      <button class="btn" id="m-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const TASKS_KEY = 'planner-tasks-v5';
+  const TOPICS_KEY = 'planner-topics-v5';
+
+  const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const SLOT_START_HOUR = 8;   // сетка с 08:00
+  const SLOT_END_HOUR = 22;    // до 22:00
+  const HOUR_PX = 60;          // высота часа
+  const TOTAL_HOURS = SLOT_END_HOUR - SLOT_START_HOUR;
+
+  const DEFAULT_TOPICS = [
+    { id:'work',   name:'Работа',   color:'#4f46e5' },
+    { id:'study',  name:'Учёба',    color:'#0891b2' },
+    { id:'spbu',   name:'СПбГУ',    color:'#4f46e5' },
+    { id:'health', name:'Здоровье', color:'#059669' },
+    { id:'personal',name:'Личное',  color:'#d97706' },
+  ];
+
+  // ── Даты ────────────────────────────────────────────────────────────────
+  function getMonday(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const mondayThis = getMonday(today);
+
+  function mondayOf(w) {
+    const d = new Date(mondayThis);
+    d.setDate(d.getDate() + w*7);
+    return d;
+  }
+  function dateForDay(w, i) {
+    const d = mondayOf(w);
+    d.setDate(d.getDate() + i);
+    return d;
+  }
+  function isoDate(d) {
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'),
+          dd = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  }
+  function fmtShort(d) {
+    return d.toLocaleDateString('ru-RU', { day:'numeric', month:'short' });
+  }
+
+  // ── Хранилище ───────────────────────────────────────────────────────────
+  function load(key, def) {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : def; }
+    catch(e) { return def; }
+  }
+  let tasks  = load(TASKS_KEY, []);
+  let topics = load(TOPICS_KEY, DEFAULT_TOPICS);
+  function save() {
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+    localStorage.setItem(TOPICS_KEY, JSON.stringify(topics));
+  }
+
+  function getTopic(id) {
+    return topics.find(t => t.id === id) || { name:'—', color:'#9ca3af' };
+  }
+
+  // ── Рендер ──────────────────────────────────────────────────────────────
+  function render() {
+    // Заголовки диапазонов
+    for (let w = 0; w < 2; w++) {
+      const mon = mondayOf(w), sun = dateForDay(w, 6);
+      document.getElementById('range-' + w).textContent =
+        `${fmtShort(mon)} — ${fmtShort(sun)}`;
+    }
+    renderWeek(0, 'cal-0');
+    renderWeek(1, 'cal-1');
+    fillTopicSelects();
+  }
+
+  function renderWeek(weekIndex, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    // Верхняя строка: пустой угол + 7 дней
+    const corner = document.createElement('div');
+    corner.className = 'cal-header';
+    container.appendChild(corner);
+
+    for (let i = 0; i < 7; i++) {
+      const d = dateForDay(weekIndex, i);
+      const isToday = isoDate(d) === isoDate(today);
+      const h = document.createElement('div');
+      h.className = 'cal-header' + (isToday ? ' today' : '');
+      h.innerHTML = `${DAY_SHORT[i]}<span class="date">${fmtShort(d)}</span>`;
+      container.appendChild(h);
+    }
+
+    // Колонка времени
+    const timeCol = document.createElement('div');
+    timeCol.className = 'cal-time-col';
+    for (let h = SLOT_START_HOUR; h < SLOT_END_HOUR; h++) {
+      const lbl = document.createElement('div');
+      lbl.className = 'cal-time-label';
+      lbl.style.height = HOUR_PX + 'px';
+      lbl.textContent = String(h).padStart(2,'0') + ':00';
+      timeCol.appendChild(lbl);
+    }
+    container.appendChild(timeCol);
+
+    // 7 колонок-дней
+    for (let i = 0; i < 7; i++) {
+      const d = dateForDay(weekIndex, i);
+      const iso = isoDate(d);
+      const isToday = iso === isoDate(today);
+
+      const col = document.createElement('div');
+      col.className = 'cal-day' + (isToday ? ' today' : '');
+      col.dataset.date = iso;
+      col.dataset.week = weekIndex;
+      col.dataset.day = i;
+
+      const dayTasks = tasks.filter(t => t.dateKey === iso);
+
+      dayTasks.forEach(t => {
+        const el = renderEvent(t);
+        col.appendChild(el);
+      });
+
+      // Клик по пустому месту — открыть модалку
+      col.addEventListener('click', e => {
+        if (e.target.closest('.event')) return;
+        const rect = col.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const totalMin = SLOT_START_HOUR * 60 + (y / HOUR_PX) * 60;
+        const h = Math.floor(totalMin / 60);
+        const m = Math.round((totalMin % 60) / 15) * 15;
+        openModal(iso, `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+      });
+
+      container.appendChild(col);
+    }
+  }
+
+  function renderEvent(t) {
+    const topic = getTopic(t.topicId);
+    const startMin = timeToMinutes(t.startTime || '10:00');
+    const endMin = timeToMinutes(t.endTime || addMinutes(t.startTime, 90));
+    const top = ((startMin - SLOT_START_HOUR*60) / 60) * HOUR_PX;
+    const height = Math.max(20, ((endMin - startMin) / 60) * HOUR_PX - 2);
+
+    const el = document.createElement('div');
+    el.className = 'event' + (t.done ? ' done' : '');
+    el.style.top = top + 'px';
+    el.style.height = height + 'px';
+    el.style.background = topic.color;
+    el.dataset.id = t.id;
+
+    const metaParts = [];
+    if (t.place)   metaParts.push(t.place);
+    if (t.teacher) metaParts.push(t.teacher);
+
+    el.innerHTML = `
+      <div class="title">${escapeHtml(t.title)}</div>
+      ${height > 35 ? `<div class="meta">${escapeHtml(metaParts.join(' · '))}</div>` : ''}
+      <button class="del" title="Удалить">✕</button>
+    `;
+
+    el.addEventListener('click', e => {
+      if (e.target.classList.contains('del')) {
+        tasks = tasks.filter(x => x.id !== t.id);
+        save(); render();
+        e.stopPropagation();
+        return;
+      }
+      // клик по телу — переключить done
+      t.done = !t.done;
+      save(); render();
+    });
+
+    return el;
+  }
+
+  function timeToMinutes(t) {
+    if (!t) return 0;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+  function addMinutes(t, m) {
+    const total = timeToMinutes(t) + m;
+    const h = Math.floor(total / 60), mm = total % 60;
+    return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ── Селекты тем ─────────────────────────────────────────────────────────
+  function fillTopicSelects() {
+    const ids = ['f-topic', 'm-topic'];
+    ids.forEach(id => {
+      const sel = document.getElementById(id);
+      const cur = sel.value;
+      sel.innerHTML = '';
+      topics.forEach(tp => {
+        const o = document.createElement('option');
+        o.value = tp.id; o.textContent = tp.name;
+        sel.appendChild(o);
+      });
+      if (cur && topics.some(t => t.id === cur)) sel.value = cur;
+    });
+  }
+
+  // ── Быстрое добавление ──────────────────────────────────────────────────
+  const fDate = document.getElementById('f-date');
+  const fTime = document.getElementById('f-time');
+  fDate.value = isoDate(today);
+  fTime.value = '10:00';
+
+  document.getElementById('add-btn').addEventListener('click', () => {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { document.getElementById('f-title').focus(); return; }
+    const topicId = document.getElementById('f-topic').value;
+    const dateKey = fDate.value;
+    const startTime = fTime.value || '10:00';
+    const endTime = addMinutes(startTime, 90);
+
+    tasks.push({
+      id: Date.now() + Math.random().toString(36).slice(2),
+      title, topicId, dateKey, startTime, endTime, done:false, source:'manual'
+    });
+    save(); render();
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-title').focus();
+  });
+  document.getElementById('f-title').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-btn').click();
+  });
+
+  // ── Модалка ─────────────────────────────────────────────────────────────
+  const modal = document.getElementById('modal');
+  const mDate = document.getElementById('m-date');
+  const mTime = document.getElementById('m-time');
+  const mDur  = document.getElementById('m-duration');
+  const mTitle= document.getElementById('m-title');
+  const mTopic= document.getElementById('m-topic');
+
+  function openModal(dateIso, timeStr) {
+    mDate.value = dateIso;
+    mTime.value = timeStr;
+    mTitle.value = '';
+    modal.classList.add('open');
+    setTimeout(() => mTitle.focus(), 50);
+  }
+  function closeModal() { modal.classList.remove('open'); }
+
+  document.getElementById('m-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.getElementById('m-save').addEventListener('click', () => {
+    const title = mTitle.value.trim();
+    if (!title) { mTitle.focus(); return; }
+    const dur = parseInt(mDur.value);
+    tasks.push({
+      id: Date.now() + Math.random().toString(36).slice(2),
+      title,
+      topicId: mTopic.value,
+      dateKey: mDate.value,
+      startTime: mTime.value,
+      endTime: addMinutes(mTime.value, dur),
+      done:false, source:'manual'
+    });
+    save(); render(); closeModal();
+  });
+  mTitle.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('m-save').click(); });
+
+  // ── Загрузка СПбГУ ──────────────────────────────────────────────────────
+  const statusEl = document.getElementById('status');
+
+  async function loadSpbu(week) {
+    statusEl.textContent = 'Загрузка...';
+    statusEl.className = 'status';
+    try {
+      const r = await fetch('/api/schedule?week=' + week);
+      const data = await r.json();
+      if (data.error) {
+        statusEl.textContent = 'Ошибка: ' + data.error;
+        statusEl.className = 'status error';
+        return;
+      }
+
+      // Убедимся, что тема СПбГУ существует
+      let spbuTopic = topics.find(t => t.id === 'spbu');
+      if (!spbuTopic) {
+        spbuTopic = { id:'spbu', name:'СПбГУ', color:'#4f46e5' };
+        topics.push(spbuTopic);
+      }
+
+      // Удаляем старые занятия СПбГУ за эту неделю, чтобы не дублировать
+      const monday = data.monday;
+      const weekDates = new Set();
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday + 'T00:00:00');
+        d.setDate(d.getDate() + i);
+        weekDates.add(isoDate(d));
+      }
+      tasks = tasks.filter(t => !(t.source === 'spbu' && weekDates.has(t.dateKey)));
+
+      // Добавляем новые
+      data.lessons.forEach(l => {
+        tasks.push({
+          id: 'spbu-' + l.dateKey + '-' + Math.random().toString(36).slice(2,7),
+          title: l.title,
+          topicId: 'spbu',
+          dateKey: l.dateKey,
+          startTime: l.startTime || '09:30',
+          endTime: l.endTime || addMinutes(l.startTime || '09:30', 90),
+          place: l.place,
+          teacher: l.teacher,
+          done: false,
+          source: 'spbu',
+        });
+      });
+
+      save(); render();
+      statusEl.textContent = `Загружено занятий: ${data.lessons.length}`;
+      statusEl.className = 'status ok';
+      setTimeout(() => { statusEl.textContent = ''; }, 4000);
+    } catch (e) {
+      statusEl.textContent = 'Ошибка: ' + e.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  document.getElementById('load-current').addEventListener('click', () => loadSpbu('current'));
+  document.getElementById('load-next').addEventListener('click', () => loadSpbu('next'));
+
+  // ── Поехали ─────────────────────────────────────────────────────────────
+  render();
+})();
+</script>
+</body>
+</html>
